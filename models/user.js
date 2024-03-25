@@ -1,6 +1,7 @@
 "use strict";
 
-const { BCRYPT_WORK_FACTOR } = require("../config.js")
+const { BCRYPT_WORK_FACTOR } = require("../config.js");
+const { NotFoundError } = require("./expressError");
 
 /** User of the site. */
 
@@ -33,22 +34,40 @@ class User {
       [username]);
     const user = result.rows[0];
 
-    if (user) {
-      return await bcrypt.compare(password, user.password);
+    if (!user) {
+      throw new UnauthorizedError("Invalid user/password");
     }
-    throw new UnauthorizedError("Invalid user/password");
+    return await bcrypt.compare(password, user.password);
   }
 
 
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+
+    const updatedUser = await db.query(`
+    UPDATE users
+           SET last_login_at = CURRENT_TIMESTAMP
+             WHERE username = $1
+             RETURNING username, last_login_at`,
+      [username]
+    );
+    if (!updatedUser.rows[0]) {
+      throw new NotFoundError("User not found");
+    }
   }
+
+
 
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
   static async all() {
+    const results = await db.query(`
+    SELECT username, first_name, last_name
+    FROM users`
+    );
+    return results.rows;
   }
 
   /** Get: get user by username
@@ -61,6 +80,16 @@ class User {
    *          last_login_at } */
 
   static async get(username) {
+    const results = await db.query(`
+    SELECT username, first_name, last_name, phone, join_at, last_login_at
+    FROM users
+    WHERE username = $1`,
+      [username]
+    );
+    if (!results.rows[0]) {
+      throw new NotFoundError("User Not Found");
+    }
+    return results.rows[0];
   }
 
   /** Return messages from this user.
@@ -72,6 +101,7 @@ class User {
    */
 
   static async messagesFrom(username) {
+
   }
 
   /** Return messages to this user.
