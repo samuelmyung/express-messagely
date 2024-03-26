@@ -3,7 +3,7 @@
 const db = require("../db");
 const bcrypt = require("bcrypt");
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, UnauthorizedError } = require("../expressError");
 
 /** User of the site. */
 
@@ -56,7 +56,6 @@ class User {
       throw new NotFoundError("User not found");
     }
   }
-
 
 
   /** All: basic info on all users:
