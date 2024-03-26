@@ -20,7 +20,7 @@ const { UnauthorizedError } = require("../expressError");
  *
  **/
 
-router.get("/:id", async function (req, res, next) {
+router.get("/:id", ensureLoggedIn, async function (req, res, next) {
   const id = req.params.id;
   const message = await Message.get(id);
 
@@ -57,7 +57,7 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  *
  **/
 
-router.post('/:id/read', async function (req, res, next) {
+router.post('/:id/read', ensureLoggedIn, async function (req, res, next) {
   const results = await Message.get(req.params.id);
   const toUsername = results.to_user.username;
 
